@@ -1,0 +1,288 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optima AI Design System - Premium Royal Colors with Glassmorphism */
+
+@layer base {
+  :root {
+    /* Royal Color Palette */
+    --background: 240 100% 99%;
+    --foreground: 240 20% 15%;
+
+    /* Royal Blue & Purple Gradient System */
+    --royal-blue: 221 83% 25%;
+    --royal-purple: 258 70% 35%;
+    --royal-gold: 48 100% 67%;
+    --royal-navy: 230 100% 12%;
+
+    /* Glass Morphism Colors */
+    --glass-bg: 240 100% 99% / 0.1;
+    --glass-border: 240 50% 90% / 0.2;
+    --glass-hover: 240 100% 99% / 0.15;
+
+    /* Component Colors */
+    --card: 0 0% 100%;
+    --card-foreground: 240 20% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 20% 15%;
+
+    --primary: 221 83% 25%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 15% 95%;
+    --secondary-foreground: 240 20% 15%;
+
+    --muted: 240 15% 95%;
+    --muted-foreground: 240 10% 50%;
+
+    --accent: 258 70% 35%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 20% 90%;
+    --input: 240 20% 96%;
+    --ring: 221 83% 25%;
+
+    --radius: 1rem;
+
+    /* Premium Gradients */
+    --gradient-royal: linear-gradient(135deg, hsl(var(--royal-blue)), hsl(var(--royal-purple)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--royal-blue)) 0%, hsl(var(--royal-purple)) 50%, hsl(var(--royal-gold)) 100%);
+    --gradient-glass: linear-gradient(135deg, hsl(var(--glass-bg)), hsl(var(--glass-hover)));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.05));
+
+    /* Shadows & Effects */
+    --shadow-royal: 0 20px 40px -12px hsl(var(--royal-blue) / 0.25);
+    --shadow-glow: 0 0 40px hsl(var(--royal-gold) / 0.3);
+    --shadow-glass: 0 8px 32px hsl(0 0% 0% / 0.1);
+
+    /* Animation Variables */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', 'system-ui', sans-serif;
+  }
+}
+
+@layer components {
+  /* Glass Morphism Base Classes */
+  .glass {
+    @apply backdrop-blur-lg border border-white/20;
+    background: var(--gradient-glass);
+    box-shadow: var(--shadow-glass);
+  }
+
+  .glass-card {
+    @apply glass rounded-2xl p-6;
+    background: var(--gradient-card);
+  }
+
+  /* Royal Button Variants */
+  .btn-hero {
+    @apply bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold px-8 py-4 rounded-2xl;
+    transition: var(--transition-smooth);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .btn-hero:hover {
+    @apply scale-105;
+    box-shadow: var(--shadow-glow), 0 0 60px hsl(var(--royal-gold) / 0.4);
+  }
+
+  .btn-royal {
+    background: var(--gradient-royal);
+    @apply text-white font-semibold px-6 py-3 rounded-xl;
+    transition: var(--transition-smooth);
+    box-shadow: var(--shadow-royal);
+  }
+
+  .btn-royal:hover {
+    @apply scale-105;
+    box-shadow: var(--shadow-royal), var(--shadow-glow);
+  }
+
+  /* Premium Animations */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out;
+  }
+
+  .animate-neural-pulse {
+    animation: neuralPulse 2s ease-in-out infinite;
+  }
+
+  .animate-brain-glow {
+    animation: brainGlow 3s ease-in-out infinite alternate;
+  }
+
+  /* Chat Bubble Variants */
+  .chat-user {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-3 md:px-4 py-2 md:py-3 ml-auto max-w-xs md:max-w-sm;
+    color: hsl(var(--foreground));
+  }
+
+  .chat-ai {
+    background: var(--gradient-royal);
+    @apply text-white rounded-2xl px-3 md:px-4 py-2 md:py-3 mr-auto max-w-xs md:max-w-sm;
+    box-shadow: var(--shadow-royal);
+  }
+}
+
+@layer utilities {
+  /* Custom Keyframes */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes glow {
+    from { box-shadow: 0 0 20px hsl(var(--royal-gold) / 0.2); }
+    to { box-shadow: 0 0 40px hsl(var(--royal-gold) / 0.4); }
+  }
+
+  @keyframes fadeUp {
+    from { 
+      opacity: 0; 
+      transform: translateY(30px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+
+  @keyframes neuralPulse {
+    0%, 100% { 
+      transform: scale(1);
+      opacity: 0.7;
+    }
+    50% { 
+      transform: scale(1.1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes brainGlow {
+    from { 
+      box-shadow: 0 0 30px hsl(var(--royal-gold) / 0.3), 0 0 60px hsl(var(--royal-purple) / 0.2);
+    }
+    to { 
+      box-shadow: 0 0 50px hsl(var(--royal-gold) / 0.5), 0 0 100px hsl(var(--royal-purple) / 0.4);
+    }
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Custom Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--gradient-royal);
+    border-radius: 10px;
+  }
+
+  /* Responsive Utilities */
+  .fit-screen {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+  }
+
+  .safe-area {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Mobile Chat Bubbles */
+  @media (max-width: 768px) {
+    .chat-user, .chat-ai {
+      @apply max-w-[85%] text-sm;
+    }
+  }
+}
