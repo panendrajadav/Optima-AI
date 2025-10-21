@@ -1,0 +1,14 @@
+/* Fix for development tools injecting aria-hidden */
+[data-lov-id][aria-hidden="true"] {
+  /* Override aria-hidden for development tools */
+  visibility: visible !important;
+}
+
+/* Ensure focusable elements remain accessible */
+[data-lov-id][aria-hidden="true"] button,
+[data-lov-id][aria-hidden="true"] input,
+[data-lov-id][aria-hidden="true"] select,
+[data-lov-id][aria-hidden="true"] textarea {
+  visibility: visible !important;
+  pointer-events: auto !important;
+}

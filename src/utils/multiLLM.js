@@ -1,161 +1,128 @@
-// Multi-LLM Integration with Azure AI Foundry
+// Multi-LLM Decision Agent System
 import { azureOpenAI } from './azureOpenAI.js';
 
-// Secure API Configuration
-const API_CONFIG = {
-  GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY,
-  OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY,
-  CLAUDE_API_KEY: import.meta.env.VITE_CLAUDE_API_KEY,
-  AZURE_OPENAI_API_KEY: import.meta.env.VITE_AZURE_OPENAI_API_KEY,
-  AZURE_OPENAI_ENDPOINT: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT
-};
-
-// Check if API keys are configured
-const checkApiKeys = () => {
-  const missing = [];
-  if (!API_CONFIG.GEMINI_API_KEY) missing.push('GEMINI');
-  if (!API_CONFIG.OPENAI_API_KEY) missing.push('OPENAI');
-  if (missing.length > 0) {
-    console.warn(`Missing API keys: ${missing.join(', ')}. Add them to .env file.`);
-  }
-};
-
-// Azure OpenAI GPT-4 API call
-async function callLLM1(query) {
-  try {
-    if (!azureOpenAI.isConfigured()) {
-      console.warn('Azure OpenAI not configured, using fallback response');
-      return {
-        output: `GPT-4 Response: ${query}. This response demonstrates comprehensive analysis with detailed explanations and examples.`,
-        model: "gpt-4",
-        confidence: 0.92,
-        tokens: 150
-      };
-    }
-
-    const response = await azureOpenAI.complete(query, {
-      model: 'gpt-4',
-      temperature: 0.7,
-      maxTokens: 1000
-    });
-
-    return {
-      output: response,
-      model: "gpt-4",
-      confidence: 0.92,
-      tokens: response.length / 4 // Rough token estimation
-    };
-  } catch (error) {
-    console.error('Azure OpenAI API error:', error);
-    return {
-      output: `I apologize, but I'm experiencing technical difficulties with Azure OpenAI. Please try again.`,
-      model: "gpt-4",
-      confidence: 0.5,
-      tokens: 20
-    };
-  }
-}
-
-// Simulated API call to Azure AI Foundry Model 2 (Claude)
-async function callLLM2(query) {
-  // Placeholder - replace with actual Azure AI API call
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        output: `Claude Response: ${query}. This response focuses on clarity, accuracy, and practical insights with a conversational tone.`,
-        model: "claude",
-        confidence: 0.89,
-        tokens: 120
-      });
-    }, 1200);
+// Azure AI Foundry API Calls
+async function callOpenAI(query) {
+  const endpoint = import.meta.env.VITE_OPENAI_ENDPOINT.replace(/\/$/, '');
+  const response = await fetch(`${endpoint}/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15-preview`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': import.meta.env.VITE_OPENAI_API_KEY
+    },
+    body: JSON.stringify({
+      messages: [{ role: 'user', content: query }],
+      max_tokens: 1000,
+      temperature: 0.7
+    })
   });
+  
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "No response from OpenAI";
 }
 
-// Simple response evaluator
-function evaluateResponses(response1, response2) {
-  // Evaluation criteria:
-  // 1. Confidence score
-  // 2. Response length (more comprehensive)
-  // 3. Token efficiency
-
-  const score1 = response1.confidence * 0.6 + (response1.output.length / 1000) * 0.3 + (1 / response1.tokens * 100) * 0.1;
-  const score2 = response2.confidence * 0.6 + (response2.output.length / 1000) * 0.3 + (1 / response2.tokens * 100) * 0.1;
-
-  return score1 > score2 ? response1 : response2;
+async function callClaude(query) {
+  const endpoint = import.meta.env.VITE_OPENAI_ENDPOINT.replace(/\/$/, '');
+  const response = await fetch(`${endpoint}/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15-preview`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': import.meta.env.VITE_OPENAI_API_KEY
+    },
+    body: JSON.stringify({
+      messages: [
+        { role: 'system', content: 'You are a creative and detailed assistant. Provide comprehensive explanations with examples.' },
+        { role: 'user', content: query }
+      ],
+      max_tokens: 1000,
+      temperature: 1.0
+    })
+  });
+  
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "No response from Claude";
 }
 
-// Main function to get optimized answer using dual LLM approach
+// Multi-LLM Decision Agent
 export async function getOptimizedAnswer(userQuery) {
+  console.log("🤖 Multi-LLM Decision Agent: Processing query...");
+  console.log("📤 Sending to: Conservative OpenAI, Creative Claude");
+  
+  let openaiResponse = "API Error: Could not get OpenAI response";
+  let claudeResponse = "API Error: Could not get Claude response";
+  
+  // Try OpenAI
   try {
-    console.log("🤖 Optima AI: Processing query with dual LLM approach...");
-
-    // Call both models in parallel
-    const [response1, response2] = await Promise.all([
-      callLLM1(userQuery),
-      callLLM2(userQuery)
-    ]);
-
-    console.log("📊 Model 1 (GPT-4):", {
-      confidence: response1.confidence,
-      tokens: response1.tokens
-    });
-    console.log("📊 Model 2 (Claude):", {
-      confidence: response2.confidence,
-      tokens: response2.tokens
-    });
-
-    // Evaluate and select the best response
-    const bestResponse = evaluateResponses(response1, response2);
-
-    console.log(`✅ Selected best response from: ${bestResponse.model}`);
-
-    return bestResponse.output;
-
+    openaiResponse = await callOpenAI(userQuery);
   } catch (error) {
-    console.error("❌ Multi-LLM Error:", error);
-    return "I apologize, but I'm currently experiencing technical difficulties. Please try again in a moment.";
+    console.log("OpenAI failed:", error.message);
   }
+  
+  // Try Claude
+  try {
+    claudeResponse = await callClaude(userQuery);
+  } catch (error) {
+    console.log("Claude failed:", error.message);
+  }
+  
+  // Score responses
+  const openaiScore = openaiResponse.length;
+  const claudeScore = claudeResponse.length;
+
+  console.log(`\n📊 Scores: Conservative OpenAI: ${openaiScore} chars | Creative Claude: ${claudeScore} chars`);
+
+  // Choose longer response
+  const winner = openaiScore > claudeScore ? "Conservative OpenAI" : "Creative Claude";
+  const selectedResponse = openaiScore > claudeScore ? openaiResponse : claudeResponse;
+  
+  console.log(`🏆 Selected: ${winner}`);
+  
+  return selectedResponse;
 }
 
-// Function to get response from specific agent/model
-export async function getAgentResponse(
-  query,
-  agentModel,
-  agentGoal
-) {
+// Agent-specific responses
+export async function getAgentResponse(query, agentModel, agentGoal) {
+  return await getOptimizedAnswer(query);
+}
+
+// Generate chat title from AI response
+export async function generateChatTitle(aiResponse) {
   try {
-    // Customize the query based on agent's goal
-    const contextualQuery = `${agentGoal}\n\nUser Query: ${query}`;
-
-    // Route to appropriate model based on agent configuration
-    switch (agentModel) {
-      case "gpt-4": {
-        const gptResponse = await callLLM1(contextualQuery);
-        return gptResponse.output;
-      }
-
-      case "claude": {
-        const claudeResponse = await callLLM2(contextualQuery);
-        return claudeResponse.output;
-      }
-
-      default:
-        // Use dual LLM approach for other models
-        return await getOptimizedAnswer(contextualQuery);
+    const text = (typeof aiResponse === 'string' ? aiResponse : String(aiResponse || '')).toLowerCase();
+    const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+    
+    const sentences = text.split(/[.!?]/);
+    const firstSentence = sentences[0] || text;
+    const words = firstSentence.split(/\s+/);
+    
+    const meaningfulWords = words.filter(word => 
+      word.length > 3 && 
+      !stopWords.includes(word.toLowerCase()) && 
+      /^[a-zA-Z]+$/.test(word)
+    );
+    
+    if (meaningfulWords.length > 0) {
+      const titleWords = meaningfulWords.slice(0, 3);
+      const title = titleWords.map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ');
+      
+      return title.length > 30 ? title.substring(0, 30) + '...' : title;
     }
+    
+    const fallbackTitle = text.split(' ').slice(0, 4).join(' ');
+    return fallbackTitle.length > 30 ? fallbackTitle.substring(0, 30) + '...' : fallbackTitle;
+    
   } catch (error) {
-    console.error("Agent Response Error:", error);
-    return "I encountered an error processing your request. Please try again.";
+    console.error('Title generation error:', error);
+    return 'New Chat';
   }
 }
 
-// Utility function to test Azure OpenAI connection
+// Utility functions
 export async function testAzureConnection() {
   try {
     console.log("🔗 Testing Azure OpenAI connection...");
-    console.log("📡 Endpoint:", azureOpenAI.endpoint);
-    console.log("🔑 API Key:", azureOpenAI.apiKey ? "Configured" : "Missing");
-
     const result = await azureOpenAI.testConnection();
     
     if (result.success) {
@@ -171,5 +138,4 @@ export async function testAzureConnection() {
   }
 }
 
-// Export Azure OpenAI client for direct use
 export { azureOpenAI };

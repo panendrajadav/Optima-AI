@@ -63,6 +63,38 @@ class AzureOpenAIClient {
     return response.choices[0]?.message?.content || '';
   }
 
+  // Chat completion with deployment support
+  async getChatCompletion(prompt, options = {}) {
+    const { deployment, ...chatOptions } = options;
+    const messages = [
+      { role: 'system', content: 'You are a helpful assistant.' },
+      { role: 'user', content: prompt }
+    ];
+    
+    const url = this.getDeploymentUrl(deployment || this.deploymentName);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': this.apiKey
+      },
+      body: JSON.stringify({
+        messages,
+        temperature: chatOptions.temperature || 0.7,
+        max_tokens: chatOptions.maxTokens || 1000
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Azure API error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content?.trim() || '';
+  }
+
   // Test connection
   async testConnection() {
     try {

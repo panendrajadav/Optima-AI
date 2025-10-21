@@ -194,7 +194,7 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="relative z-10 text-center py-6 md:py-8 border-t border-border/50 px-3 md:px-6">
         <p className="text-sm md:text-base text-muted-foreground">
-          © 2024 Optima AI. All rights reserved.
+          Developed by Panendra Sufiyan Thanuj and Varun.
         </p>
       </footer>
     </div>
