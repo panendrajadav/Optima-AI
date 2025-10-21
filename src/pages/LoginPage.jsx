@@ -140,7 +140,7 @@ const LoginPage = () => {
 
           {/* Demo Credentials */}
           <div className="mt-8 p-4 glass-card border border-white/20">
-            <h4 className="font-semibold text-sm mb-3 text-royal-gold">Demo Credentials</h4>
+            <h4 className="font-semibold text-sm mb-3 text-royal-gold">Demo Access</h4>
             <div className="space-y-2">
               <Button
                 type="button"
@@ -156,20 +156,7 @@ const LoginPage = () => {
                   <p className="text-xs text-muted-foreground">demo@optima.ai / demo123</p>
                 </div>
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full text-left justify-start glass border-white/20 hover:bg-white/10"
-                onClick={() => {
-                  setEmail('admin@optima.ai');
-                  setPassword('admin123');
-                }}
-              >
-                <div>
-                  <p className="font-medium">Admin User</p>
-                  <p className="text-xs text-muted-foreground">admin@optima.ai / admin123</p>
-                </div>
-              </Button>
+
             </div>
           </div>
 

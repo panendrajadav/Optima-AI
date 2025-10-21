@@ -279,6 +279,27 @@
     padding-right: env(safe-area-inset-right);
   }
 
+  /* Chat Message Text Hover Fix */
+  .prose p:hover,
+  .prose strong:hover,
+  .prose em:hover,
+  .prose li:hover,
+  .prose h1:hover,
+  .prose h2:hover,
+  .prose h3:hover {
+    color: rgb(15 23 42) !important; /* slate-900 */
+  }
+
+  /* Prevent text selection color issues */
+  .text-slate-800:hover {
+    color: rgb(15 23 42) !important; /* slate-900 */
+  }
+
+  /* User message hover */
+  .bg-slate-100:hover p {
+    color: rgb(15 23 42) !important; /* slate-900 */
+  }
+
   /* Mobile Chat Bubbles */
   @media (max-width: 768px) {
     .chat-user, .chat-ai {

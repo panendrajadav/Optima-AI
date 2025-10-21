@@ -14,11 +14,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Demo users database
-  const users = [
-    { email: 'demo@optima.ai', password: 'demo123', name: 'Demo User', role: 'user' },
-    { email: 'admin@optima.ai', password: 'admin123', name: 'Admin User', role: 'admin' }
-  ];
+  // Demo password for all @optima.ai users
+  const DEMO_PASSWORD = 'demo123';
 
   useEffect(() => {
     checkAuthStatus();
@@ -58,13 +55,16 @@ export const AuthProvider = ({ children }) => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-    
-    if (foundUser) {
+    // Check if email ends with @optima.ai and password matches
+    if (email.toLowerCase().endsWith('@optima.ai') && password === DEMO_PASSWORD) {
+      // Extract name from email (part before @optima.ai)
+      const nameFromEmail = email.split('@')[0];
+      const displayName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
+      
       const userData = { 
-        email: foundUser.email, 
-        name: foundUser.name, 
-        role: foundUser.role,
+        email: email.toLowerCase(), 
+        name: displayName, 
+        role: 'user',
         loginTime: new Date().toISOString(),
         sessionId: Math.random().toString(36).substring(2, 15)
       };
@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: userData };
     }
     
-    return { success: false, error: 'Invalid email or password' };
+    return { success: false, error: 'Invalid email or password. Use format: name@optima.ai with password: demo123' };
   };
 
   const logout = () => {

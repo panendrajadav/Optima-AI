@@ -282,9 +282,9 @@ const ChatInterface = () => {
             <Button
               variant="ghost"
               onClick={() => setShowAgents(!showAgents)}
-              className="w-full justify-between text-left p-2 hover:bg-white/5"
+              className="w-full justify-between text-left p-2 hover:bg-slate-100 hover:text-slate-900"
             >
-              <div className="flex items-center">
+              <div className="flex items-center text-slate-700 hover:text-slate-900">
                 <Bot className="h-4 w-4 mr-2" />
                 My Agents
               </div>
@@ -331,9 +331,9 @@ const ChatInterface = () => {
             <Button
               variant="ghost"
               onClick={() => setShowHistory(!showHistory)}
-              className="w-full justify-between text-left p-2 hover:bg-white/5"
+              className="w-full justify-between text-left p-2 hover:bg-slate-100 hover:text-slate-900"
             >
-              <div className="flex items-center">
+              <div className="flex items-center text-slate-700 hover:text-slate-900">
                 <History className="h-4 w-4 mr-2" />
                 History
               </div>
@@ -544,7 +544,7 @@ const ChatInterface = () => {
                     <Button
                       key={index}
                       variant="outline"
-                      className="text-left justify-start p-3 sm:p-4 h-auto border-slate-200 hover:bg-slate-50 text-sm sm:text-base"
+                      className="text-left justify-start p-3 sm:p-4 h-auto border-slate-200 hover:bg-slate-50 text-sm sm:text-base text-slate-700 hover:text-slate-900 hover:border-slate-300 hover:shadow-md transform hover:scale-105 transition-all duration-200"
                       onClick={() => setInputValue(suggestion)}
                     >
                       {suggestion}
@@ -558,8 +558,8 @@ const ChatInterface = () => {
               <div key={message.id} className="mb-6 sm:mb-8">
                 {message.role === "user" ? (
                   <div className="flex justify-end">
-                    <div className="bg-slate-100 rounded-2xl px-3 sm:px-4 py-2 sm:py-3 max-w-[85%] sm:max-w-2xl">
-                      <p className="text-slate-800 text-sm sm:text-base break-words">{message.content}</p>
+                    <div className="bg-slate-100 rounded-2xl px-3 sm:px-4 py-2 sm:py-3 max-w-[85%] sm:max-w-2xl hover:bg-slate-200 transition-colors">
+                      <p className="text-slate-800 text-sm sm:text-base break-words hover:text-slate-900">{message.content}</p>
                     </div>
                   </div>
                 ) : (
@@ -581,15 +581,15 @@ const ChatInterface = () => {
                                 </pre>
                               )
                             },
-                            p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
-                            ul: ({children}) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
-                            ol: ({children}) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
-                            li: ({children}) => <li className="text-sm">{children}</li>,
-                            h1: ({children}) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
-                            h2: ({children}) => <h2 className="text-base font-bold mb-2">{children}</h2>,
-                            h3: ({children}) => <h3 className="text-sm font-bold mb-1">{children}</h3>,
-                            strong: ({children}) => <strong className="font-semibold">{children}</strong>,
-                            em: ({children}) => <em className="italic">{children}</em>
+                            p: ({children}) => <p className="mb-2 last:mb-0 text-slate-800">{children}</p>,
+                            ul: ({children}) => <ul className="list-disc list-inside mb-2 space-y-1 text-slate-800">{children}</ul>,
+                            ol: ({children}) => <ol className="list-decimal list-inside mb-2 space-y-1 text-slate-800">{children}</ol>,
+                            li: ({children}) => <li className="text-sm text-slate-800">{children}</li>,
+                            h1: ({children}) => <h1 className="text-lg font-bold mb-2 text-slate-800">{children}</h1>,
+                            h2: ({children}) => <h2 className="text-base font-bold mb-2 text-slate-800">{children}</h2>,
+                            h3: ({children}) => <h3 className="text-sm font-bold mb-1 text-slate-800">{children}</h3>,
+                            strong: ({children}) => <strong className="font-semibold text-slate-800">{children}</strong>,
+                            em: ({children}) => <em className="italic text-slate-800">{children}</em>
                           }}
                         >
                           {message.content}
