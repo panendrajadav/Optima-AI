@@ -25,7 +25,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { getOptimizedAnswer, getAgentResponse, generateChatTitle } from "@/utils/multiLLM";
+import { getOptimizedAnswer, generateChatTitle } from "@/utils/multiLLM";
+import { createAgent, getAgentResponse } from "@/utils/agentSystem";
 import ReactMarkdown from 'react-markdown';
 
 const ChatInterface = () => {
@@ -107,8 +108,10 @@ const ChatInterface = () => {
       let aiResponse;
 
       // Use agent-specific response if agent is selected
-      if (selectedAgent) {
-        aiResponse = await getAgentResponse(inputValue, selectedAgent.model, selectedAgent.goal);
+      if (selectedAgent && selectedAgent.respond) {
+        aiResponse = await selectedAgent.respond(inputValue);
+      } else if (selectedAgent) {
+        aiResponse = await getAgentResponse(inputValue, selectedAgent.goal, selectedAgent.model);
       } else {
         // Use Multi-LLM system with judge for Optima AI
         aiResponse = await getOptimizedAnswer(inputValue);
@@ -190,21 +193,24 @@ const ChatInterface = () => {
     }
   };
 
-  const handleCreateAgent = () => {
+  const handleCreateAgent = async () => {
     if (!newAgentName.trim() || !newAgentGoal.trim() || !newAgentModel) return;
 
-    const newAgent = {
-      id: Date.now().toString(),
-      name: newAgentName,
-      goal: newAgentGoal,
-      model: newAgentModel
-    };
+    try {
+      const agent = await createAgent(newAgentGoal, newAgentModel);
+      const namedAgent = {
+        ...agent,
+        name: newAgentName
+      };
 
-    setAgents(prev => [...prev, newAgent]);
-    setNewAgentName("");
-    setNewAgentGoal("");
-    setNewAgentModel("");
-    setIsCreateAgentOpen(false);
+      setAgents(prev => [...prev, namedAgent]);
+      setNewAgentName("");
+      setNewAgentGoal("");
+      setNewAgentModel("");
+      setIsCreateAgentOpen(false);
+    } catch (error) {
+      console.error('Agent creation failed:', error);
+    }
   };
 
   const startNewConversation = () => {

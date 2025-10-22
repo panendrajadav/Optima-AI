@@ -100,8 +100,18 @@ export async function getOptimizedAnswer(userQuery) {
 }
 
 // Agent-specific responses
-export async function getAgentResponse(query, agentModel, agentGoal) {
-  return await getOptimizedAnswer(query);
+export async function getAgentResponse(query, agentGoal) {
+  if (!agentGoal) {
+    return await getOptimizedAnswer(query);
+  }
+
+  const agentPrompt = `You are a specialized AI assistant focused on: ${agentGoal}
+
+User Question: "${query}"
+
+Respond ONLY within your specialization. If unrelated, redirect back to your focus area.`;
+
+  return await getOptimizedAnswer(agentPrompt);
 }
 
 // Generate chat title from AI response
@@ -157,4 +167,4 @@ export async function testAzureConnection() {
   }
 }
 
-export { azureOpenAI };
+export { azureOpenAI, callOpenAI, callClaude };
