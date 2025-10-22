@@ -60,6 +60,14 @@ const ChatInterface = () => {
       return [];
     }
   });
+  const [agentConversations, setAgentConversations] = useState(() => {
+    try {
+      const saved = localStorage.getItem('optima-agent-conversations');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
@@ -183,33 +191,61 @@ const ChatInterface = () => {
         generateChatTitle(aiResponse).then(title => {
           setCurrentChatTitle(title);
           
-          // Save conversation to history (only for Optima AI, not agents)
-          if (!selectedAgent) {
-            const newConversation = {
-              id: Date.now().toString(),
-              title: title,
-              messages: [userMessage, assistantMessage],
-              createdAt: new Date()
-            };
+          // Save conversation to history
+          const newConversation = {
+            id: Date.now().toString(),
+            title: title,
+            messages: [userMessage, assistantMessage],
+            createdAt: new Date(),
+            agentId: selectedAgent?.id || null
+          };
+          
+          if (selectedAgent) {
+            // Save to agent-specific conversations
+            setAgentConversations(prev => {
+              const updated = {
+                ...prev,
+                [selectedAgent.id]: [...(prev[selectedAgent.id] || []), newConversation]
+              };
+              localStorage.setItem('optima-agent-conversations', JSON.stringify(updated));
+              return updated;
+            });
+          } else {
+            // Save to Optima AI conversations
             setConversations(prev => {
               const updated = [...prev, newConversation];
               localStorage.setItem('optima-conversations', JSON.stringify(updated));
               return updated;
             });
-            setCurrentConversationId(newConversation.id);
           }
+          setCurrentConversationId(newConversation.id);
         });
       } else if (currentConversationId) {
         // Update existing conversation
-        setConversations(prev => {
-          const updated = prev.map(conv => 
-            conv.id === currentConversationId 
-              ? { ...conv, messages: [...conv.messages, userMessage, assistantMessage] }
-              : conv
-          );
-          localStorage.setItem('optima-conversations', JSON.stringify(updated));
-          return updated;
-        });
+        if (selectedAgent) {
+          setAgentConversations(prev => {
+            const updated = {
+              ...prev,
+              [selectedAgent.id]: prev[selectedAgent.id]?.map(conv => 
+                conv.id === currentConversationId 
+                  ? { ...conv, messages: [...conv.messages, userMessage, assistantMessage] }
+                  : conv
+              ) || []
+            };
+            localStorage.setItem('optima-agent-conversations', JSON.stringify(updated));
+            return updated;
+          });
+        } else {
+          setConversations(prev => {
+            const updated = prev.map(conv => 
+              conv.id === currentConversationId 
+                ? { ...conv, messages: [...conv.messages, userMessage, assistantMessage] }
+                : conv
+            );
+            localStorage.setItem('optima-conversations', JSON.stringify(updated));
+            return updated;
+          });
+        }
       }
     } catch (error) {
       const errorMessage = {
@@ -261,6 +297,32 @@ const ChatInterface = () => {
       setMessages([]);
       setCurrentConversationId(null);
       setCurrentChatTitle("New Chat");
+    }
+  };
+
+  const handleDeleteConversation = (conversationId) => {
+    if (selectedAgent) {
+      setAgentConversations(prev => {
+        const updated = {
+          ...prev,
+          [selectedAgent.id]: prev[selectedAgent.id]?.filter(conv => conv.id !== conversationId) || []
+        };
+        localStorage.setItem('optima-agent-conversations', JSON.stringify(updated));
+        return updated;
+      });
+    } else {
+      setConversations(prev => {
+        const updated = prev.filter(conv => conv.id !== conversationId);
+        localStorage.setItem('optima-conversations', JSON.stringify(updated));
+        return updated;
+      });
+    }
+    
+    // If deleted conversation was selected, start new chat
+    if (currentConversationId === conversationId) {
+      setMessages([]);
+      setCurrentConversationId(null);
+      setCurrentChatTitle(selectedAgent ? selectedAgent.name : "New Chat");
     }
   };
 
@@ -351,11 +413,11 @@ const ChatInterface = () => {
             {showAgents && (
               <div className="pl-6 space-y-1">
                 {agents.map((agent) => (
-                  <div key={agent.id} className="flex items-center group">
+                  <div key={agent.id} className="flex items-center group rounded-md transition-colors">
                     <Button
                       variant="ghost"
-                      className={`flex-1 justify-start text-sm p-2 hover:bg-white/5 ${
-                        selectedAgent?.id === agent.id ? 'bg-white/10' : ''
+                      className={`flex-1 justify-start text-sm p-2 hover:bg-slate-100 hover:text-black ${
+                        selectedAgent?.id === agent.id ? 'bg-slate-200' : ''
                       }`}
                       onClick={() => {
                         setSelectedAgent(agent);
@@ -369,7 +431,7 @@ const ChatInterface = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                      className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-red-400 hover:text-red-600 hover:bg-red-500/20"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteAgent(agent.id);
@@ -402,24 +464,36 @@ const ChatInterface = () => {
             
             {showHistory && (
               <div className="pl-6 space-y-1">
-                {conversations.map((conversation) => (
-                  <Button
-                    key={conversation.id}
-                    variant="ghost"
-                    className={`w-full justify-start text-sm p-2 hover:bg-white/5 ${
-                      currentConversationId === conversation.id ? 'bg-white/10' : ''
-                    }`}
-                    onClick={() => {
-                      setCurrentConversationId(conversation.id);
-                      setMessages(conversation.messages);
-                      setSelectedAgent(null);
-                      setCurrentChatTitle(conversation.title);
-                    }}
-                  >
-                    {conversation.title}
-                  </Button>
+                {(selectedAgent ? (agentConversations[selectedAgent.id] || []) : conversations).map((conversation) => (
+                  <div key={conversation.id} className="flex items-center group rounded-md transition-colors">
+                    <Button
+                      variant="ghost"
+                      className={`flex-1 justify-start text-sm p-2 hover:bg-slate-100 hover:text-black ${
+                        currentConversationId === conversation.id ? 'bg-slate-200' : ''
+                      }`}
+                      onClick={() => {
+                        setCurrentConversationId(conversation.id);
+                        setMessages(conversation.messages);
+                        setSelectedAgent(null);
+                        setCurrentChatTitle(conversation.title);
+                      }}
+                    >
+                      {conversation.title}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-red-400 hover:text-red-600 hover:bg-red-500/20"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteConversation(conversation.id);
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 ))}
-                {conversations.length === 0 && (
+                {(selectedAgent ? (agentConversations[selectedAgent.id] || []).length === 0 : conversations.length === 0) && (
                   <p className="text-sm text-muted-foreground px-2">No conversations yet</p>
                 )}
               </div>
