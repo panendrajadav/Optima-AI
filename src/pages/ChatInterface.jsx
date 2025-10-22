@@ -21,12 +21,21 @@ import {
   MicOff,
   Paperclip,
   Image,
-  Smile
+  Smile,
+  Trash2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { getOptimizedAnswer, generateChatTitle } from "@/utils/multiLLM";
 import { createAgent, getAgentResponse } from "@/utils/agentSystem";
+
+// Reconstruct agent respond function after loading from localStorage
+const reconstructAgent = (agent) => {
+  if (!agent.respond) {
+    agent.respond = (query) => getAgentResponse(query, agent.goal, agent.model);
+  }
+  return agent;
+};
 import ReactMarkdown from 'react-markdown';
 
 const ChatInterface = () => {
@@ -35,8 +44,22 @@ const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [agents, setAgents] = useState([]);
-  const [conversations, setConversations] = useState([]);
+  const [agents, setAgents] = useState(() => {
+    try {
+      const saved = localStorage.getItem('optima-agents');
+      return saved ? JSON.parse(saved).map(reconstructAgent) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [conversations, setConversations] = useState(() => {
+    try {
+      const saved = localStorage.getItem('optima-conversations');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
@@ -168,17 +191,25 @@ const ChatInterface = () => {
               messages: [userMessage, assistantMessage],
               createdAt: new Date()
             };
-            setConversations(prev => [...prev, newConversation]);
+            setConversations(prev => {
+              const updated = [...prev, newConversation];
+              localStorage.setItem('optima-conversations', JSON.stringify(updated));
+              return updated;
+            });
             setCurrentConversationId(newConversation.id);
           }
         });
       } else if (currentConversationId) {
         // Update existing conversation
-        setConversations(prev => prev.map(conv => 
-          conv.id === currentConversationId 
-            ? { ...conv, messages: [...conv.messages, userMessage, assistantMessage] }
-            : conv
-        ));
+        setConversations(prev => {
+          const updated = prev.map(conv => 
+            conv.id === currentConversationId 
+              ? { ...conv, messages: [...conv.messages, userMessage, assistantMessage] }
+              : conv
+          );
+          localStorage.setItem('optima-conversations', JSON.stringify(updated));
+          return updated;
+        });
       }
     } catch (error) {
       const errorMessage = {
@@ -203,13 +234,33 @@ const ChatInterface = () => {
         name: newAgentName
       };
 
-      setAgents(prev => [...prev, namedAgent]);
+      setAgents(prev => {
+        const updated = [...prev, namedAgent];
+        localStorage.setItem('optima-agents', JSON.stringify(updated));
+        return updated;
+      });
       setNewAgentName("");
       setNewAgentGoal("");
       setNewAgentModel("");
       setIsCreateAgentOpen(false);
     } catch (error) {
       console.error('Agent creation failed:', error);
+    }
+  };
+
+  const handleDeleteAgent = (agentId) => {
+    setAgents(prev => {
+      const updated = prev.filter(agent => agent.id !== agentId);
+      localStorage.setItem('optima-agents', JSON.stringify(updated));
+      return updated;
+    });
+    
+    // If deleted agent was selected, switch to Optima AI
+    if (selectedAgent?.id === agentId) {
+      setSelectedAgent(null);
+      setMessages([]);
+      setCurrentConversationId(null);
+      setCurrentChatTitle("New Chat");
     }
   };
 
@@ -300,30 +351,33 @@ const ChatInterface = () => {
             {showAgents && (
               <div className="pl-6 space-y-1">
                 {agents.map((agent) => (
-                  <Button
-                    key={agent.id}
-                    variant="ghost"
-                    className="w-full justify-start text-sm p-2 hover:bg-white/5"
-                  >
-                    {agent.name}
-                  </Button>
-                ))}
-                {agents.map((agent) => (
-                  <Button
-                    key={agent.id}
-                    variant="ghost"
-                    className={`w-full justify-start text-sm p-2 hover:bg-white/5 ${
-                      selectedAgent?.id === agent.id ? 'bg-white/10' : ''
-                    }`}
-                    onClick={() => {
-                      setSelectedAgent(agent);
-                      setMessages([]);
-                      setCurrentConversationId(null);
-                      setCurrentChatTitle(agent.name);
-                    }}
-                  >
-                    {agent.name}
-                  </Button>
+                  <div key={agent.id} className="flex items-center group">
+                    <Button
+                      variant="ghost"
+                      className={`flex-1 justify-start text-sm p-2 hover:bg-white/5 ${
+                        selectedAgent?.id === agent.id ? 'bg-white/10' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedAgent(agent);
+                        setMessages([]);
+                        setCurrentConversationId(null);
+                        setCurrentChatTitle(agent.name);
+                      }}
+                    >
+                      {agent.name}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteAgent(agent.id);
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 ))}
                 {agents.length === 0 && (
                   <p className="text-sm text-muted-foreground px-2">No agents created yet</p>
