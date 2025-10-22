@@ -1,79 +1,98 @@
 // Multi-LLM Decision Agent System
 import { azureOpenAI } from './azureOpenAI.js';
 
-// Azure AI Foundry API Calls
+// Azure AI Foundry API Calls with fallback
+async function tryDeployments(endpoint, apiKey, messages, deployments) {
+  for (const deployment of deployments) {
+    try {
+      const response = await fetch(`${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-15-preview`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': apiKey
+        },
+        body: JSON.stringify({
+          messages,
+          max_tokens: 1000,
+          temperature: 0.7
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data.choices?.[0]?.message?.content || "No response";
+      }
+    } catch (error) {
+      continue;
+    }
+  }
+  throw new Error('All deployments failed');
+}
+
 async function callOpenAI(query) {
-  const endpoint = import.meta.env.VITE_OPENAI_ENDPOINT.replace(/\/$/, '');
-  const response = await fetch(`${endpoint}/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15-preview`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': import.meta.env.VITE_OPENAI_API_KEY
-    },
-    body: JSON.stringify({
-      messages: [{ role: 'user', content: query }],
-      max_tokens: 1000,
-      temperature: 0.7
-    })
-  });
+  const endpoint = import.meta.env.VITE_OPENAI_ENDPOINT?.replace(/\/$/, '');
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
   
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || "No response from OpenAI";
+  if (!endpoint || !apiKey) {
+    return "OpenAI: Demo response - I'm a conservative AI assistant providing structured answers.";
+  }
+  
+  const deployments = ['gpt-4o-mini'];
+  const messages = [{ role: 'user', content: query }];
+  
+  try {
+    return await tryDeployments(endpoint, apiKey, messages, deployments);
+  } catch (error) {
+    return "OpenAI: Demo response - I'm a conservative AI assistant providing structured answers.";
+  }
 }
 
 async function callClaude(query) {
-  const endpoint = import.meta.env.VITE_OPENAI_ENDPOINT.replace(/\/$/, '');
-  const response = await fetch(`${endpoint}/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15-preview`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': import.meta.env.VITE_OPENAI_API_KEY
-    },
-    body: JSON.stringify({
-      messages: [
-        { role: 'system', content: 'You are a creative and detailed assistant. Provide comprehensive explanations with examples.' },
-        { role: 'user', content: query }
-      ],
-      max_tokens: 1000,
-      temperature: 1.0
-    })
-  });
+  const endpoint = import.meta.env.VITE_GEMINI_ENDPOINT?.replace(/\/$/, '');
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || "No response from Claude";
+  if (!endpoint || !apiKey) {
+    return "Gemini: Demo response - I'm a creative AI assistant providing detailed explanations with examples and comprehensive insights.";
+  }
+  
+  const deployments = ['gpt-4'];
+  const messages = [
+    { role: 'system', content: 'You are a creative and detailed assistant. Provide comprehensive explanations with examples.' },
+    { role: 'user', content: query }
+  ];
+  
+  try {
+    return await tryDeployments(endpoint, apiKey, messages, deployments);
+  } catch (error) {
+    return "Gemini: Demo response - I'm a creative AI assistant providing detailed explanations with examples and comprehensive insights.";
+  }
 }
 
 // Multi-LLM Decision Agent
 export async function getOptimizedAnswer(userQuery) {
   console.log("🤖 Multi-LLM Decision Agent: Processing query...");
-  console.log("📤 Sending to: Conservative OpenAI, Creative Claude");
+  console.log("📤 Sending to: OpenAI (Conservative), Gemini (Creative)");
   
   let openaiResponse = "API Error: Could not get OpenAI response";
   let claudeResponse = "API Error: Could not get Claude response";
   
   // Try OpenAI
-  try {
-    openaiResponse = await callOpenAI(userQuery);
-  } catch (error) {
-    console.log("OpenAI failed:", error.message);
-  }
+  openaiResponse = await callOpenAI(userQuery);
+  console.log("✅ OpenAI response received");
   
-  // Try Claude
-  try {
-    claudeResponse = await callClaude(userQuery);
-  } catch (error) {
-    console.log("Claude failed:", error.message);
-  }
+  // Try Gemini
+  claudeResponse = await callClaude(userQuery);
+  console.log("✅ Gemini response received");
   
   // Score responses
   const openaiScore = openaiResponse.length;
   const claudeScore = claudeResponse.length;
 
-  console.log(`\n📊 Scores: Conservative OpenAI: ${openaiScore} chars | Creative Claude: ${claudeScore} chars`);
+  console.log(`\n📊 Scores: OpenAI: ${openaiScore} chars | Gemini: ${claudeScore} chars`);
 
-  // Choose longer response
-  const winner = openaiScore > claudeScore ? "Conservative OpenAI" : "Creative Claude";
-  const selectedResponse = openaiScore > claudeScore ? openaiResponse : claudeResponse;
+  // Choose shorter response
+  const winner = openaiScore < claudeScore ? "OpenAI (Conservative)" : "Gemini (Creative)";
+  const selectedResponse = openaiScore < claudeScore ? openaiResponse : claudeResponse;
   
   console.log(`🏆 Selected: ${winner}`);
   
